@@ -228,10 +228,10 @@ class Parameters():
         print(f"LWE inexact noise std: {sqrt(var_ks-tmp).log2()}")
 
 
-        # var ms1: Q -> Q_ks
-        var_ms1 = (var_sk_rlwe+1)/12
-        # var ms2: Q_ks -> q
-        var_ms2 = (var_sk_lwe+1)/12
+        # var ms1: Q -> Q_ks 
+        var_ms1 = ((N*var_sk_rlwe)+1) * RR(1/12)
+        # var ms2: Q_ks -> q (odd mod switch. Set variance of rounding error 4/12)
+        var_ms2 = ((n*var_sk_lwe)+1) * RR(4/12)
 
         Q_sq = RR(self.Q*self.Q)
         Q_ks_sq = RR(self.Q_ks*self.Q_ks)
@@ -244,7 +244,7 @@ class Parameters():
         print(f"Worst case autos: {worst_case_autos}")
         var_acc = (n*var_rlwe_by_rgsw)+(var_auto*(worst_case_autos))
     
-        print(((q_sq*(2*var_acc))/Q_sq), ((q_sq*(var_ms1+var_ks))/Q_ks_sq), var_ks)
+        print(((q_sq*(2*var_acc))/Q_sq), ((q_sq*(var_ms1+var_ks))/Q_ks_sq), var_ms1, var_ms2)
 
         var_zeta_nand = ((q_sq*(2*var_acc))/Q_sq) + ((q_sq*(var_ms1+var_ks))/Q_ks_sq) + var_ms2
         var_zeta_xor = ((q_sq*(4*var_acc))/Q_sq) + ((q_sq*(var_ms1+var_ks))/Q_ks_sq) + var_ms2
@@ -299,9 +299,9 @@ I_2 = Parameters(
     logQ_ks=15,
     logq=11,
     logN=11, 
-    n=480,
+    n=580,
     w=10,
-    lwe_sk=Secret.ErrorDistribution(N=480),
+    lwe_sk=Secret.TernarySecret(N=580),
     rlwe_sk=Secret.TernarySecret(N=1<<11),
     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
         logB=7,
@@ -336,9 +336,9 @@ I_4 = Parameters(
     logQ_ks=16,
     logq=11,
     logN=11, 
-    n=520,
+    n=620,
     w=10,
-    lwe_sk=Secret.ErrorDistribution(N=520),
+    lwe_sk=Secret.TernarySecret(N=620),
     rlwe_sk=Secret.TernarySecret(N=1<<11),
     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
         logB=6,
@@ -372,17 +372,17 @@ I_4 = Parameters(
 I_8 = Parameters(
     logQ=54, 
     logQ_ks=17,
-    logq=11,
+    logq=12,
     logN=11, 
-    n=560,
+    n=660,
     w=10,
-    lwe_sk=Secret.ErrorDistribution(N=560),
+    lwe_sk=Secret.TernarySecret(N=660),
     rlwe_sk=Secret.TernarySecret(N=1<<11),
     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
         logB=5,
         logQ=54,
-        d_a=8,
-        d_b=7
+        d_a=9,
+        d_b=8
     ),
     rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
         logB=17,
@@ -532,8 +532,8 @@ NI_8 = Parameters(
 
 
 # I_2.noise_multi_party()
-I_4.noise_multi_party()
-# I_8.noise_multi_party()
+# I_4.noise_multi_party()
+I_8.noise_multi_party()
 # NI_2.noise_multi_party()
 # NI_4.noise_multi_party()
 # NI_8.noise_multi_party()
@@ -545,6 +545,18 @@ I_4.noise_multi_party()
 ##########
 # EXTRAS #
 ##########
+
+
+def odd_mod_switch(): 
+    lwe_n = 480
+    k = RR(2) # No. of parties
+    var_sk = Secret.ErrorDistribution(N=lwe_n).variance()
+
+    # ms
+    var_ms = ((RR(lwe_n)*(k*var_sk))+1) * RR(4)/RR(12)
+    print(f"var ms: {var_ms}")
+
+# odd_mod_switch()
 
 def ksk_noise():
     logB = 12

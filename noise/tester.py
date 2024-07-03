@@ -13,8 +13,12 @@ class Decomposer():
             assert logQ  >= (d_b * logB)
 
         self.ignore_bits_a = logQ - (d_a*logB)
+        if self.ignore_bits_a < 0:
+            self.ignore_bits_a = 0
         if d_b is not None:
             self.ignore_bits_b = logQ - (d_b*logB)
+            if self.ignore_bits_b < 0:
+                self.ignore_bits_b = 0
         else:
             self.ignore_bits_b = None
 
@@ -289,81 +293,8 @@ class Parameters():
         print(rlwe_res)
 
 
-TWO_MP_PARAMS = Parameters(
-    logQ=55, 
-    logQ_ks=16,
-    logq=11,
-    logN=11, 
-    n=520,
-    w=10,
-    lwe_sk=Secret.ErrorDistribution(N=520),
-    rlwe_sk=Secret.TernarySecret(N=1<<11),
-    rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=11,
-        logQ=55,
-        d_a=4,
-        d_b=3
-    ),
-    rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=11,
-        logQ=55,
-        d_a=2,
-        d_b=1
-    ),
-    auto_decomposer=Decomposer.single_decomposer(
-        logB=11,
-        logQ=55,
-        d=2
-    ),
-    lwe_decomposer=Decomposer.single_decomposer(
-        logB=1,
-        logQ=16,
-        d=13,
-    ),
-    non_interactive_uitos_decomposer=None,
-    fresh_noise_std=3.19,
-    variant=ParameterVariant.INTERACTIVE_MULTIPARTY,
-    parties=8,
-)
 
-EIGHT_MP_PARAMS = Parameters(
-    logQ=55, 
-    logQ_ks=16,
-    logq=11,
-    logN=11, 
-    n=520,
-    w=10,
-    lwe_sk=Secret.ErrorDistribution(N=520),
-    rlwe_sk=Secret.TernarySecret(N=1<<11),
-    rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=11,
-        logQ=55,
-        d_a=4,
-        d_b=3
-    ),
-    rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=11,
-        logQ=55,
-        d_a=2,
-        d_b=1
-    ),
-    auto_decomposer=Decomposer.single_decomposer(
-        logB=11,
-        logQ=55,
-        d=2
-    ),
-    lwe_decomposer=Decomposer.single_decomposer(
-        logB=1,
-        logQ=16,
-        d=13,
-    ),
-    non_interactive_uitos_decomposer=None,
-    fresh_noise_std=3.19,
-    variant=ParameterVariant.INTERACTIVE_MULTIPARTY,
-    parties=8,
-)
-
-I_2_HB_FR = Parameters(
+I_2 = Parameters(
     logQ=54, 
     logQ_ks=15,
     logq=11,
@@ -373,13 +304,13 @@ I_2_HB_FR = Parameters(
     lwe_sk=Secret.ErrorDistribution(N=480),
     rlwe_sk=Secret.TernarySecret(N=1<<11),
     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=8,
+        logB=7,
         logQ=54,
         d_a=6,
-        d_b=6
+        d_b=5
     ),
     rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=16,
+        logB=17,
         logQ=54,
         d_a=1,
         d_b=1
@@ -392,7 +323,7 @@ I_2_HB_FR = Parameters(
     lwe_decomposer=Decomposer.single_decomposer(
         logB=1,
         logQ=15,
-        d=11,
+        d=12,
     ),
     non_interactive_uitos_decomposer=None,
     fresh_noise_std=3.19,
@@ -400,7 +331,82 @@ I_2_HB_FR = Parameters(
     parties=2,
 )
 
-NI_2_HB_FR = Parameters(
+I_4 = Parameters(
+    logQ=54, 
+    logQ_ks=16,
+    logq=11,
+    logN=11, 
+    n=520,
+    w=10,
+    lwe_sk=Secret.ErrorDistribution(N=520),
+    rlwe_sk=Secret.TernarySecret(N=1<<11),
+    rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=6,
+        logQ=54,
+        d_a=7,
+        d_b=6
+    ),
+    rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=17,
+        logQ=54,
+        d_a=1,
+        d_b=1
+    ),
+    auto_decomposer=Decomposer.single_decomposer(
+        logB=24,
+        logQ=54,
+        d=1
+    ),
+    lwe_decomposer=Decomposer.single_decomposer(
+        logB=1,
+        logQ=16,
+        d=13,
+    ),
+    non_interactive_uitos_decomposer=None,
+    fresh_noise_std=3.19,
+    variant=ParameterVariant.INTERACTIVE_MULTIPARTY,
+    parties=4,
+)
+
+
+I_8 = Parameters(
+    logQ=54, 
+    logQ_ks=17,
+    logq=11,
+    logN=11, 
+    n=560,
+    w=10,
+    lwe_sk=Secret.ErrorDistribution(N=560),
+    rlwe_sk=Secret.TernarySecret(N=1<<11),
+    rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=5,
+        logQ=54,
+        d_a=8,
+        d_b=7
+    ),
+    rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=17,
+        logQ=54,
+        d_a=1,
+        d_b=1
+    ),
+    auto_decomposer=Decomposer.single_decomposer(
+        logB=24,
+        logQ=54,
+        d=1
+    ),
+    lwe_decomposer=Decomposer.single_decomposer(
+        logB=1,
+        logQ=17,
+        d=14,
+    ),
+    non_interactive_uitos_decomposer=None,
+    fresh_noise_std=3.19,
+    variant=ParameterVariant.INTERACTIVE_MULTIPARTY,
+    parties=8,
+)
+
+NI_2 = Parameters(
     logQ=54, 
     logQ_ks=15,
     logq=11,
@@ -410,13 +416,13 @@ NI_2_HB_FR = Parameters(
     lwe_sk=Secret.ErrorDistribution(N=480),
     rlwe_sk=Secret.TernarySecret(N=1<<11),
     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=6,
+        logB=4,
         logQ=54,
-        d_a=7,
-        d_b=7
+        d_a=10,
+        d_b=9
     ),
     rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=16,
+        logB=17,
         logQ=54,
         d_a=1,
         d_b=1
@@ -441,56 +447,14 @@ NI_2_HB_FR = Parameters(
     parties=2,
 )
 
-# NI_4_HB_FR = Parameters(
-#     logQ=54, 
-#     logQ_ks=15,
-#     logq=11,
-#     logN=11, 
-#     n=480,
-#     w=10,
-#     lwe_sk=Secret.ErrorDistribution(N=480),
-#     rlwe_sk=Secret.TernarySecret(N=1<<11),
-#     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
-#         logB=4,
-#         logQ=54,
-#         d_a=10,
-#         d_b=9
-#     ),
-#     rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
-#         logB=17,
-#         logQ=54,
-#         d_a=1,
-#         d_b=1
-#     ),
-#     auto_decomposer=Decomposer.single_decomposer(
-#         logB=24,
-#         logQ=54,
-#         d=1
-#     ),
-#     lwe_decomposer=Decomposer.single_decomposer(
-#         logB=1,
-#         logQ=15,
-#         d=12
-#     ),
-#     non_interactive_uitos_decomposer=Decomposer.single_decomposer(
-#         logB=1,
-#         logQ=54,
-#         d=50
-#     ),
-#     fresh_noise_std=3.19,
-#     variant=ParameterVariant.NON_INTERACTIVE_MULTIPARTY,
-#     parties=4,
-# )
-
-
-NI_4_HB_FR = Parameters(
+NI_4 = Parameters(
     logQ=54, 
     logQ_ks=16,
     logq=11,
     logN=11, 
-    n=510,
+    n=520,
     w=10,
-    lwe_sk=Secret.ErrorDistribution(N=510),
+    lwe_sk=Secret.ErrorDistribution(N=520),
     rlwe_sk=Secret.TernarySecret(N=1<<11),
     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
         logB=4,
@@ -524,20 +488,20 @@ NI_4_HB_FR = Parameters(
     parties=4,
 )
 
-NI_8_HB_FR = Parameters(
+NI_8 = Parameters(
     logQ=54, 
-    logQ_ks=16,
+    logQ_ks=17,
     logq=11,
     logN=11, 
-    n=510,
+    n=560,
     w=10,
-    lwe_sk=Secret.ErrorDistribution(N=510),
+    lwe_sk=Secret.ErrorDistribution(N=560),
     rlwe_sk=Secret.TernarySecret(N=1<<11),
     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=3,
+        logB=2,
         logQ=54,
-        d_a=15,
-        d_b=15
+        d_a=20,
+        d_b=19
     ),
     rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
         logB=17,
@@ -552,8 +516,8 @@ NI_8_HB_FR = Parameters(
     ),
     lwe_decomposer=Decomposer.single_decomposer(
         logB=1,
-        logQ=16,
-        d=13
+        logQ=17,
+        d=14
     ),
     non_interactive_uitos_decomposer=Decomposer.single_decomposer(
         logB=1,
@@ -565,11 +529,22 @@ NI_8_HB_FR = Parameters(
     parties=8,
 )
 
-# I_2_HB_FR.noise_multi_party()
-NI_4_HB_FR.noise_multi_party()
-# NI_8_HB_FR.noise_multi_party()
-# NI_2_HB_FR.noise_multi_party()
+
+
+# I_2.noise_multi_party()
+I_4.noise_multi_party()
+# I_8.noise_multi_party()
+# NI_2.noise_multi_party()
+# NI_4.noise_multi_party()
+# NI_8.noise_multi_party()
+
 # TRIAL.noise_multi_party()
+
+
+
+##########
+# EXTRAS #
+##########
 
 def ksk_noise():
     logB = 12
@@ -604,3 +579,201 @@ def ksk_noise():
 #     lwe = LWE.Parameters(n=509, q=(1<<16), Xs=ND.DiscreteGaussian(3.19), Xe=ND.DiscreteGaussian(3.19),m=500)
 #     lwe_res = LWE.estimate(lwe, red_cost_model = RC.BDGL16)
 # kok()
+
+# Non_interactive 2 parties with Low communication with failure probability 2^{-48}
+NI_2_FP_2_48 = Parameters(
+    logQ=54, 
+    logQ_ks=15,
+    logq=11,
+    logN=11, 
+    n=480,
+    w=10,
+    lwe_sk=Secret.ErrorDistribution(N=480),
+    rlwe_sk=Secret.TernarySecret(N=1<<11),
+    rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=5,
+        logQ=54,
+        d_a=8,
+        d_b=7
+    ),
+    rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=17,
+        logQ=54,
+        d_a=1,
+        d_b=1
+    ),
+    auto_decomposer=Decomposer.single_decomposer(
+        logB=24,
+        logQ=54,
+        d=1
+    ),
+    lwe_decomposer=Decomposer.single_decomposer(
+        logB=1,
+        logQ=15,
+        d=12,
+    ),
+    non_interactive_uitos_decomposer=Decomposer.single_decomposer(
+        logB=1,
+        logQ=54,
+        d=50
+    ),
+    fresh_noise_std=3.19,
+    variant=ParameterVariant.NON_INTERACTIVE_MULTIPARTY,
+    parties=2,
+)
+
+# 8 party Non-interactive 2^{-40} Failure probability
+NI_8_FP_2_40 = Parameters(
+    logQ=54, 
+    logQ_ks=16,
+    logq=11,
+    logN=11, 
+    n=520,
+    w=10,
+    lwe_sk=Secret.ErrorDistribution(N=520),
+    rlwe_sk=Secret.TernarySecret(N=1<<11),
+    rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=2,
+        logQ=54,
+        d_a=22,
+        d_b=21
+    ),
+    rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=17,
+        logQ=54,
+        d_a=1,
+        d_b=1
+    ),
+    auto_decomposer=Decomposer.single_decomposer(
+        logB=24,
+        logQ=54,
+        d=1
+    ),
+    lwe_decomposer=Decomposer.single_decomposer(
+        logB=1,
+        logQ=16,
+        d=13
+    ),
+    non_interactive_uitos_decomposer=Decomposer.single_decomposer(
+        logB=1,
+        logQ=54,
+        d=50
+    ),
+    fresh_noise_std=3.19,
+    variant=ParameterVariant.NON_INTERACTIVE_MULTIPARTY,
+    parties=8,
+)
+
+# Interactive 8P High commuincation, Faster runtime, Failure probability 2^{-42}
+I_8_HB_FR = Parameters(
+    logQ=54, 
+    logQ_ks=16,
+    logq=11,
+    logN=11, 
+    n=520,
+    w=10,
+    lwe_sk=Secret.ErrorDistribution(N=520),
+    rlwe_sk=Secret.TernarySecret(N=1<<11),
+    rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=4,
+        logQ=54,
+        d_a=12,
+        d_b=11
+    ),
+    rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=17,
+        logQ=54,
+        d_a=1,
+        d_b=1
+    ),
+    auto_decomposer=Decomposer.single_decomposer(
+        logB=24,
+        logQ=54,
+        d=1
+    ),
+    lwe_decomposer=Decomposer.single_decomposer(
+        logB=1,
+        logQ=16,
+        d=13,
+    ),
+    non_interactive_uitos_decomposer=None,
+    fresh_noise_std=3.19,
+    variant=ParameterVariant.INTERACTIVE_MULTIPARTY,
+    parties=8,
+)
+
+
+
+# TWO_MP_PARAMS = Parameters(
+#     logQ=55, 
+#     logQ_ks=16,
+#     logq=11,
+#     logN=11, 
+#     n=520,
+#     w=10,
+#     lwe_sk=Secret.ErrorDistribution(N=520),
+#     rlwe_sk=Secret.TernarySecret(N=1<<11),
+#     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
+#         logB=11,
+#         logQ=55,
+#         d_a=4,
+#         d_b=3
+#     ),
+#     rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
+#         logB=11,
+#         logQ=55,
+#         d_a=2,
+#         d_b=1
+#     ),
+#     auto_decomposer=Decomposer.single_decomposer(
+#         logB=11,
+#         logQ=55,
+#         d=2
+#     ),
+#     lwe_decomposer=Decomposer.single_decomposer(
+#         logB=1,
+#         logQ=16,
+#         d=13,
+#     ),
+#     non_interactive_uitos_decomposer=None,
+#     fresh_noise_std=3.19,
+#     variant=ParameterVariant.INTERACTIVE_MULTIPARTY,
+#     parties=8,
+# )
+
+# EIGHT_MP_PARAMS = Parameters(
+#     logQ=55, 
+#     logQ_ks=16,
+#     logq=11,
+#     logN=11, 
+#     n=520,
+#     w=10,
+#     lwe_sk=Secret.ErrorDistribution(N=520),
+#     rlwe_sk=Secret.TernarySecret(N=1<<11),
+#     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
+#         logB=11,
+#         logQ=55,
+#         d_a=4,
+#         d_b=3
+#     ),
+#     rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
+#         logB=11,
+#         logQ=55,
+#         d_a=2,
+#         d_b=1
+#     ),
+#     auto_decomposer=Decomposer.single_decomposer(
+#         logB=11,
+#         logQ=55,
+#         d=2
+#     ),
+#     lwe_decomposer=Decomposer.single_decomposer(
+#         logB=1,
+#         logQ=16,
+#         d=13,
+#     ),
+#     non_interactive_uitos_decomposer=None,
+#     fresh_noise_std=3.19,
+#     variant=ParameterVariant.INTERACTIVE_MULTIPARTY,
+#     parties=8,
+# )

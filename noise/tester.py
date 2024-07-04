@@ -8,7 +8,7 @@ RR = RealField(256)
 
 
 def format_rr(v: RR):
-    return v.numerical_approx()
+    return f"{v.numerical_approx().str()} (log2={v.log2().numerical_approx().str()})"
 
 class Decomposer():
     def __init__(self, d_a: Integer, d_b: Integer, logQ: Integer, logB: Integer):
@@ -252,8 +252,6 @@ class Parameters():
         var_zeta_nand = ((q_sq*(2*var_acc))/Q_sq) + ((q_sq*(var_ms1+var_ks))/Q_ks_sq) + var_ms2
         var_zeta_xor = ((q_sq*(4*var_acc))/Q_sq) + ((q_sq*(var_ms1+var_ks))/Q_ks_sq) + var_ms2
 
-        # var_zeta_nand = var_ms2
-        # var_zeta_xor = var_ms2
 
         fail_prob_nand = ((RR(self.q)/8)/sqrt(2*var_zeta_nand)).erfc()
         fail_prob_xor = ((RR(self.q)/8)/sqrt(2*var_zeta_xor)).erfc()
@@ -261,8 +259,8 @@ class Parameters():
         
 
         print(f'''
-            Worst case autos: {format_rr(worst_case_autos)}
-            var_sk_rlwe: {format_rr(var_sk_rlwe)}
+            Worst case autos: {format_rr(worst_case_autos)} 
+            var_sk_rlwe: {format_rr(var_sk_rlwe)}   
             var: {format_rr(self.var)}
             std_ms1: {format_rr(sqrt(var_ms1))}
             std_ms2: {format_rr(sqrt(var_ms2))}
@@ -303,7 +301,8 @@ class Parameters():
 
 
 
-I_2 = Parameters(
+# Interactive 2P; high bandswidth; fast runtime (2ms faster than I_2P_LB_SR but has key size 116Mib whereas I_2P_LB_SR has key size 99.6MiB)
+I_2_HB_FR = Parameters(
     logQ=54, 
     logQ_ks=16,
     logq=12,
@@ -333,6 +332,44 @@ I_2 = Parameters(
         logB=1,
         logQ=16,
         d=13,
+    ),
+    non_interactive_uitos_decomposer=None,
+    fresh_noise_std=3.19,
+    variant=ParameterVariant.INTERACTIVE_MULTIPARTY,
+    parties=2,
+)
+
+# Interactive 2P; low bandiwdth; slow runtime (although not that slow)
+I_2_LB_SR = Parameters(
+    logQ=54, 
+    logQ_ks=15,
+    logq=11,
+    logN=11, 
+    n=580,
+    w=10,
+    lwe_sk=Secret.TernarySecret(N=580),
+    rlwe_sk=Secret.TernarySecret(N=1<<11),
+    rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=7,
+        logQ=54,
+        d_a=6,
+        d_b=5
+    ),
+    rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=17,
+        logQ=54,
+        d_a=1,
+        d_b=1
+    ),
+    auto_decomposer=Decomposer.single_decomposer(
+        logB=24,
+        logQ=54,
+        d=1
+    ),
+    lwe_decomposer=Decomposer.single_decomposer(
+        logB=1,
+        logQ=15,
+        d=12,
     ),
     non_interactive_uitos_decomposer=None,
     fresh_noise_std=3.19,
@@ -456,6 +493,8 @@ NI_2 = Parameters(
     variant=ParameterVariant.NON_INTERACTIVE_MULTIPARTY,
     parties=2,
 )
+
+
 
 NI_4_HB_FR = Parameters(
     logQ=54, 
@@ -582,11 +621,14 @@ NI_8 = Parameters(
 
 
 
-# I_2.noise_multi_party()
+# I_2_HB_FR.noise_multi_party()
+# I_2_LB_SR.noise_multi_party()
 # I_4.noise_multi_party()
 # I_8.noise_multi_party()
 # NI_2.noise_multi_party()
+# NI_2_NEW.noise_multi_party()
 # NI_4.noise_multi_party()
+# NI_4_HB_FR.noise_multi_party()
 # NI_4_LB_SR.noise_multi_party()
 # NI_8.noise_multi_party()
 
@@ -840,4 +882,46 @@ I_8_HB_FR = Parameters(
 #     fresh_noise_std=3.19,
 #     variant=ParameterVariant.INTERACTIVE_MULTIPARTY,
 #     parties=8,
+# )
+
+
+# NI_2_NEW = Parameters(
+#     logQ=54, 
+#     logQ_ks=15,
+#     logq=11,
+#     logN=11, 
+#     n=580,
+#     w=10,
+#     lwe_sk=Secret.TernarySecret(N=580),
+#     rlwe_sk=Secret.TernarySecret(N=1<<11),
+#     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
+#         logB=4,
+#         logQ=54,
+#         d_a=10,
+#         d_b=9 
+#     ),
+#     rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
+#         logB=17,
+#         logQ=54,
+#         d_a=1,
+#         d_b=1
+#     ),
+#     auto_decomposer=Decomposer.single_decomposer(
+#         logB=24,
+#         logQ=54,
+#         d=1
+#     ),
+#     lwe_decomposer=Decomposer.single_decomposer(
+#         logB=1,
+#         logQ=15,
+#         d=12,
+#     ),
+#     non_interactive_uitos_decomposer=Decomposer.single_decomposer(
+#         logB=1,
+#         logQ=54,
+#         d=50
+#     ),
+#     fresh_noise_std=3.19,
+#     variant=ParameterVariant.NON_INTERACTIVE_MULTIPARTY,
+#     parties=2,
 # )

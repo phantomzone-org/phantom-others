@@ -6,6 +6,10 @@ from enum import Enum
 
 RR = RealField(256)
 
+
+def format_rr(v: RR):
+    return v.numerical_approx()
+
 class Decomposer():
     def __init__(self, d_a: Integer, d_b: Integer, logQ: Integer, logB: Integer):
         assert logQ  >= (d_a * logB)
@@ -166,7 +170,7 @@ class Parameters():
         d_b_rgsw_by_rgsw = self.rgsw_by_rgsw_decomposer.d_b
         var_rgswbyrgsw_a = (d_a_rgsw_by_rgsw * ((B_rgsw_rgsw*B_rgsw_rgsw)/RR(12)) * var_fresh * N)
         tmp = var_rgswbyrgsw_a
-        print(f"RGSW x RGSW part A ks noise std: {sqrt(tmp).log2()}")
+        print(f"RGSW x RGSW part A ks noise std: {format_rr(sqrt(tmp))}")
         # Approximation error induced by ignoring some least signifcant bits. 
         # The variance of ignored bits is (2^{ignored_bits})^2
         var_rgswbyrgsw_a += (
@@ -174,7 +178,7 @@ class Parameters():
             *   var_sk_rlwe
             *   N
         )
-        print(f"RGSW x RGSW part A inexact noise std: {sqrt(var_rgswbyrgsw_a-tmp).log2()}")
+        print(f"RGSW x RGSW part A inexact noise std: {format_rr(sqrt(var_rgswbyrgsw_a-tmp))}")
         var_rgswbyrgsw_b = (d_b_rgsw_by_rgsw * ((B_rgsw_rgsw*B_rgsw_rgsw)/RR(12) * var_fresh * N))
         var_rgswbyrgsw_b += (
                 RR(1 << (self.rgsw_by_rgsw_decomposer.ignore_bits_b*2))/12
@@ -188,13 +192,13 @@ class Parameters():
         B_rlwe_rgsw = RR(1<<self.rlwe_by_rgsw_decomposer.logB)
         var_rlwe_by_rgsw_a = (d_a_rlwe_by_rgsw * ((B_rlwe_rgsw*B_rlwe_rgsw)/12) * (var_brk) * N) 
         tmp = var_rlwe_by_rgsw_a
-        print(f"RLWE x RGSW Part A ks noise std: {sqrt(tmp).log2()}")
+        print(f"RLWE x RGSW Part A ks noise std: {format_rr(sqrt(tmp))}")
         var_rlwe_by_rgsw_a += (
                 RR(1 << (self.rlwe_by_rgsw_decomposer.ignore_bits_a*2))/12
             *   var_sk_rlwe
             *   N
         )
-        print(f"RLWE x RGSW Part A inexact noise std: {sqrt(var_rlwe_by_rgsw_a-tmp).log2()}")
+        print(f"RLWE x RGSW Part A inexact noise std: {format_rr(sqrt(var_rlwe_by_rgsw_a-tmp))}")
         var_rlwe_by_rgsw_b = (d_b_rlwe_by_rgsw * ((B_rgsw_rgsw*B_rgsw_rgsw)/12) * (var_brk) * N) 
         var_rlwe_by_rgsw_b += (
                 RR(1 << (self.rlwe_by_rgsw_decomposer.ignore_bits_b*2))/12
@@ -220,12 +224,12 @@ class Parameters():
         d_lwe  = self.lwe_decomposer.d_a
         var_ks = (((B_lwe*B_lwe)/12)*(k*var)*d_lwe*N) 
         tmp = var_ks
-        print(f"LWE ks noise std: {sqrt(tmp).log2()}")
+        print(f"LWE ks noise std: {format_rr(sqrt(tmp))}")
         var_ks += (N*(
                 RR(1 << (self.lwe_decomposer.ignore_bits_a*2))/12
             *   var_sk_rlwe
         ))
-        print(f"LWE inexact noise std: {sqrt(var_ks-tmp).log2()}")
+        print(f"LWE inexact noise std: {format_rr(sqrt(var_ks-tmp))}")
 
 
         # var ms1: Q -> Q_ks 
@@ -241,38 +245,43 @@ class Parameters():
 
         # var_acc = (n*var_rlwe_by_rgsw)+(self.q*var_auto)
         worst_case_autos = (((w - 1)/w)*n)+((1/w)*(self.q>>1))
-        print(f"Worst case autos: {worst_case_autos}")
         var_acc = (n*var_rlwe_by_rgsw)+(var_auto*(worst_case_autos))
     
-        print(((q_sq*(2*var_acc))/Q_sq), ((q_sq*(var_ms1+var_ks))/Q_ks_sq), var_ms1, var_ms2)
+        print(format_rr(sqrt((q_sq*(2*var_acc))/Q_sq)), format_rr(sqrt((q_sq*(var_ms1+var_ks))/Q_ks_sq)), format_rr(sqrt(var_ms1)), format_rr(sqrt(var_ms2)))
 
         var_zeta_nand = ((q_sq*(2*var_acc))/Q_sq) + ((q_sq*(var_ms1+var_ks))/Q_ks_sq) + var_ms2
         var_zeta_xor = ((q_sq*(4*var_acc))/Q_sq) + ((q_sq*(var_ms1+var_ks))/Q_ks_sq) + var_ms2
 
+        # var_zeta_nand = var_ms2
+        # var_zeta_xor = var_ms2
+
         fail_prob_nand = ((RR(self.q)/8)/sqrt(2*var_zeta_nand)).erfc()
         fail_prob_xor = ((RR(self.q)/8)/sqrt(2*var_zeta_xor)).erfc()
 
+        
+
         print(f'''
-            var_sk_rlwe: {var_sk_rlwe.log2()}
-            var: {self.var.log2()}
-            var_ms1: {var_ms1.log2()}
-            var_ms2: {var_ms2.log2()}
-            std_ks: {sqrt(var_ks).log2()}
-            std_fresh: {sqrt(var_fresh).log2()}
-            std_brk: {sqrt(var_brk).log2()}
-            std_auto: {sqrt(var_auto).log2()}
-            std_rlwe_by_rgsw: {sqrt(var_rlwe_by_rgsw).log2()}
-            std_acc: {sqrt(var_acc).log2()}
-            std_zeta_nand: {sqrt(var_zeta_nand).log2()}
-            std_zeta_xor: {sqrt(var_zeta_xor).log2()}
-            failure probability nand: {fail_prob_nand}
-            failure probability xor : {fail_prob_xor}
+            Worst case autos: {format_rr(worst_case_autos)}
+            var_sk_rlwe: {format_rr(var_sk_rlwe)}
+            var: {format_rr(self.var)}
+            std_ms1: {format_rr(sqrt(var_ms1))}
+            std_ms2: {format_rr(sqrt(var_ms2))}
+            std_ks: {format_rr(sqrt(var_ks))}
+            std_fresh: {format_rr(sqrt(var_fresh))}
+            std_brk: {format_rr(sqrt(var_brk))}
+            std_auto: {format_rr(sqrt(var_auto))}
+            std_rlwe_by_rgsw: {format_rr(sqrt(var_rlwe_by_rgsw))}
+            std_acc: {format_rr(sqrt(var_acc))}
+            std_zeta_nand: {format_rr(sqrt(var_zeta_nand))}
+            std_zeta_xor: {format_rr(sqrt(var_zeta_xor))}
+            failure probability nand: {format_rr(fail_prob_nand)}
+            failure probability xor : {format_rr(fail_prob_xor)}
         ''')
 
         # if fail_prob_nand != D(0):
-        print(f'Failure probability nand log 2: {fail_prob_nand.log2()}')
+        print(f'Failure probability nand log 2: {format_rr(fail_prob_nand.log2())}')
         # if fail_prob_nand != D(0):
-        print(f'Failure probability xor log 2: {fail_prob_xor.log2()}')
+        print(f'Failure probability xor log 2: {format_rr(fail_prob_xor.log2())}')
 
     def security(self):
         # LWE
@@ -296,18 +305,18 @@ class Parameters():
 
 I_2 = Parameters(
     logQ=54, 
-    logQ_ks=15,
-    logq=11,
+    logQ_ks=16,
+    logq=12,
     logN=11, 
-    n=580,
+    n=520,
     w=10,
-    lwe_sk=Secret.TernarySecret(N=580),
+    lwe_sk=Secret.ErrorDistribution(N=520),
     rlwe_sk=Secret.TernarySecret(N=1<<11),
     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=7,
+        logB=6,
         logQ=54,
-        d_a=6,
-        d_b=5
+        d_a=8,
+        d_b=7
     ),
     rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
         logB=17,
@@ -322,8 +331,8 @@ I_2 = Parameters(
     ),
     lwe_decomposer=Decomposer.single_decomposer(
         logB=1,
-        logQ=15,
-        d=12,
+        logQ=16,
+        d=13,
     ),
     non_interactive_uitos_decomposer=None,
     fresh_noise_std=3.19,
@@ -368,7 +377,6 @@ I_4 = Parameters(
     parties=4,
 )
 
-
 I_8 = Parameters(
     logQ=54, 
     logQ_ks=17,
@@ -406,51 +414,12 @@ I_8 = Parameters(
     parties=8,
 )
 
+
+
 NI_2 = Parameters(
     logQ=54, 
-    logQ_ks=15,
-    logq=11,
-    logN=11, 
-    n=480,
-    w=10,
-    lwe_sk=Secret.ErrorDistribution(N=480),
-    rlwe_sk=Secret.TernarySecret(N=1<<11),
-    rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=4,
-        logQ=54,
-        d_a=10,
-        d_b=9
-    ),
-    rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=17,
-        logQ=54,
-        d_a=1,
-        d_b=1
-    ),
-    auto_decomposer=Decomposer.single_decomposer(
-        logB=24,
-        logQ=54,
-        d=1
-    ),
-    lwe_decomposer=Decomposer.single_decomposer(
-        logB=1,
-        logQ=15,
-        d=12,
-    ),
-    non_interactive_uitos_decomposer=Decomposer.single_decomposer(
-        logB=1,
-        logQ=54,
-        d=50
-    ),
-    fresh_noise_std=3.19,
-    variant=ParameterVariant.NON_INTERACTIVE_MULTIPARTY,
-    parties=2,
-)
-
-NI_4 = Parameters(
-    logQ=54, 
     logQ_ks=16,
-    logq=11,
+    logq=12,
     logN=11, 
     n=520,
     w=10,
@@ -476,7 +445,89 @@ NI_4 = Parameters(
     lwe_decomposer=Decomposer.single_decomposer(
         logB=1,
         logQ=16,
-        d=12
+        d=13,
+    ),
+    non_interactive_uitos_decomposer=Decomposer.single_decomposer(
+        logB=1,
+        logQ=54,
+        d=50
+    ),
+    fresh_noise_std=3.19,
+    variant=ParameterVariant.NON_INTERACTIVE_MULTIPARTY,
+    parties=2,
+)
+
+NI_4_HB_FR = Parameters(
+    logQ=54, 
+    logQ_ks=16,
+    logq=11,
+    logN=11, 
+    n=620,
+    w=10,
+    lwe_sk=Secret.TernarySecret(N=620),
+    rlwe_sk=Secret.TernarySecret(N=1<<11),
+    rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=3,
+        logQ=54,
+        d_a=13,
+        d_b=12
+    ),
+    rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=17,
+        logQ=54,
+        d_a=1,
+        d_b=1
+    ),
+    auto_decomposer=Decomposer.single_decomposer(
+        logB=24,
+        logQ=54,
+        d=1
+    ),
+    lwe_decomposer=Decomposer.single_decomposer(
+        logB=1,
+        logQ=16,
+        d=13
+    ),
+    non_interactive_uitos_decomposer=Decomposer.single_decomposer(
+        logB=1,
+        logQ=54,
+        d=50
+    ),
+    fresh_noise_std=3.19,
+    variant=ParameterVariant.NON_INTERACTIVE_MULTIPARTY,
+    parties=4,
+)
+
+NI_4_LB_SR = Parameters(
+    logQ=54, 
+    logQ_ks=16,
+    logq=12,
+    logN=11, 
+    n=620,
+    w=10,
+    lwe_sk=Secret.TernarySecret(N=620),
+    rlwe_sk=Secret.TernarySecret(N=1<<11),
+    rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=4,
+        logQ=54,
+        d_a=10,
+        d_b=9
+    ),
+    rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=17,
+        logQ=54,
+        d_a=1,
+        d_b=1
+    ),
+    auto_decomposer=Decomposer.single_decomposer(
+        logB=24,
+        logQ=54,
+        d=1
+    ),
+    lwe_decomposer=Decomposer.single_decomposer(
+        logB=1,
+        logQ=16,
+        d=13
     ),
     non_interactive_uitos_decomposer=Decomposer.single_decomposer(
         logB=1,
@@ -491,17 +542,17 @@ NI_4 = Parameters(
 NI_8 = Parameters(
     logQ=54, 
     logQ_ks=17,
-    logq=11,
+    logq=12,
     logN=11, 
-    n=560,
+    n=660,
     w=10,
-    lwe_sk=Secret.ErrorDistribution(N=560),
+    lwe_sk=Secret.TernarySecret(N=660),
     rlwe_sk=Secret.TernarySecret(N=1<<11),
     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
         logB=2,
         logQ=54,
         d_a=20,
-        d_b=19
+        d_b=18
     ),
     rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
         logB=17,
@@ -533,9 +584,10 @@ NI_8 = Parameters(
 
 # I_2.noise_multi_party()
 # I_4.noise_multi_party()
-I_8.noise_multi_party()
+# I_8.noise_multi_party()
 # NI_2.noise_multi_party()
 # NI_4.noise_multi_party()
+# NI_4_LB_SR.noise_multi_party()
 # NI_8.noise_multi_party()
 
 # TRIAL.noise_multi_party()

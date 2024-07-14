@@ -276,11 +276,6 @@ class Parameters():
             failure probability xor : {format_rr(fail_prob_xor)}
         ''')
 
-        # if fail_prob_nand != D(0):
-        print(f'Failure probability nand log 2: {format_rr(fail_prob_nand.log2())}')
-        # if fail_prob_nand != D(0):
-        print(f'Failure probability xor log 2: {format_rr(fail_prob_xor.log2())}')
-
     def security(self):
         # LWE
         lwe = LWE.Parameters(n=self.n, q=(1<<self.logQ_ks), Xs=self.lwe_sk.distr, Xe=ND.DiscreteGaussian(3.19),m=self.n)
@@ -299,7 +294,42 @@ class Parameters():
         print(rlwe)
         print(rlwe_res)
 
-
+PT_3_BITS = Parameters(
+    logQ=54, 
+    logQ_ks=17,
+    logq=12,
+    logN=11, 
+    n=900,
+    w=10,
+    lwe_sk=Secret.TernarySecret(N=900),
+    rlwe_sk=Secret.TernarySecret(N=1<<11),
+    rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=9,
+        logQ=54,
+        d_a=6,
+        d_b=6
+    ),
+    rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
+        logB=9,
+        logQ=54,
+        d_a=6,
+        d_b=6
+    ),
+    auto_decomposer=Decomposer.single_decomposer(
+        logB=9,
+        logQ=54,
+        d=6
+    ),
+    lwe_decomposer=Decomposer.single_decomposer(
+        logB=1,
+        logQ=17,
+        d=16,
+    ),
+    non_interactive_uitos_decomposer=None,
+    fresh_noise_std=3.19,
+    variant=ParameterVariant.INTERACTIVE_MULTIPARTY,
+    parties=2,
+)
 
 # Interactive 2P; high bandswidth; fast runtime (2ms faster than I_2P_LB_SR but has key size 116Mib whereas I_2P_LB_SR has key size 99.6MiB)
 I_2_HB_FR = Parameters(
@@ -451,8 +481,6 @@ I_8 = Parameters(
     parties=8,
 )
 
-
-
 NI_2 = Parameters(
     logQ=54, 
     logQ_ks=16,
@@ -493,8 +521,6 @@ NI_2 = Parameters(
     variant=ParameterVariant.NON_INTERACTIVE_MULTIPARTY,
     parties=2,
 )
-
-
 
 NI_4_HB_FR = Parameters(
     logQ=54, 
@@ -619,8 +645,7 @@ NI_8 = Parameters(
     parties=8,
 )
 
-
-
+# PT_3_BITS.noise_multi_party()
 # I_2_HB_FR.noise_multi_party()
 # I_2_LB_SR.noise_multi_party()
 # I_4.noise_multi_party()
@@ -685,243 +710,3 @@ def ksk_noise():
 #     lwe = LWE.Parameters(n=509, q=(1<<16), Xs=ND.DiscreteGaussian(3.19), Xe=ND.DiscreteGaussian(3.19),m=500)
 #     lwe_res = LWE.estimate(lwe, red_cost_model = RC.BDGL16)
 # kok()
-
-# Non_interactive 2 parties with Low communication with failure probability 2^{-48}
-NI_2_FP_2_48 = Parameters(
-    logQ=54, 
-    logQ_ks=15,
-    logq=11,
-    logN=11, 
-    n=480,
-    w=10,
-    lwe_sk=Secret.ErrorDistribution(N=480),
-    rlwe_sk=Secret.TernarySecret(N=1<<11),
-    rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=5,
-        logQ=54,
-        d_a=8,
-        d_b=7
-    ),
-    rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=17,
-        logQ=54,
-        d_a=1,
-        d_b=1
-    ),
-    auto_decomposer=Decomposer.single_decomposer(
-        logB=24,
-        logQ=54,
-        d=1
-    ),
-    lwe_decomposer=Decomposer.single_decomposer(
-        logB=1,
-        logQ=15,
-        d=12,
-    ),
-    non_interactive_uitos_decomposer=Decomposer.single_decomposer(
-        logB=1,
-        logQ=54,
-        d=50
-    ),
-    fresh_noise_std=3.19,
-    variant=ParameterVariant.NON_INTERACTIVE_MULTIPARTY,
-    parties=2,
-)
-
-# 8 party Non-interactive 2^{-40} Failure probability
-NI_8_FP_2_40 = Parameters(
-    logQ=54, 
-    logQ_ks=16,
-    logq=11,
-    logN=11, 
-    n=520,
-    w=10,
-    lwe_sk=Secret.ErrorDistribution(N=520),
-    rlwe_sk=Secret.TernarySecret(N=1<<11),
-    rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=2,
-        logQ=54,
-        d_a=22,
-        d_b=21
-    ),
-    rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=17,
-        logQ=54,
-        d_a=1,
-        d_b=1
-    ),
-    auto_decomposer=Decomposer.single_decomposer(
-        logB=24,
-        logQ=54,
-        d=1
-    ),
-    lwe_decomposer=Decomposer.single_decomposer(
-        logB=1,
-        logQ=16,
-        d=13
-    ),
-    non_interactive_uitos_decomposer=Decomposer.single_decomposer(
-        logB=1,
-        logQ=54,
-        d=50
-    ),
-    fresh_noise_std=3.19,
-    variant=ParameterVariant.NON_INTERACTIVE_MULTIPARTY,
-    parties=8,
-)
-
-# Interactive 8P High commuincation, Faster runtime, Failure probability 2^{-42}
-I_8_HB_FR = Parameters(
-    logQ=54, 
-    logQ_ks=16,
-    logq=11,
-    logN=11, 
-    n=520,
-    w=10,
-    lwe_sk=Secret.ErrorDistribution(N=520),
-    rlwe_sk=Secret.TernarySecret(N=1<<11),
-    rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=4,
-        logQ=54,
-        d_a=12,
-        d_b=11
-    ),
-    rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
-        logB=17,
-        logQ=54,
-        d_a=1,
-        d_b=1
-    ),
-    auto_decomposer=Decomposer.single_decomposer(
-        logB=24,
-        logQ=54,
-        d=1
-    ),
-    lwe_decomposer=Decomposer.single_decomposer(
-        logB=1,
-        logQ=16,
-        d=13,
-    ),
-    non_interactive_uitos_decomposer=None,
-    fresh_noise_std=3.19,
-    variant=ParameterVariant.INTERACTIVE_MULTIPARTY,
-    parties=8,
-)
-
-
-
-# TWO_MP_PARAMS = Parameters(
-#     logQ=55, 
-#     logQ_ks=16,
-#     logq=11,
-#     logN=11, 
-#     n=520,
-#     w=10,
-#     lwe_sk=Secret.ErrorDistribution(N=520),
-#     rlwe_sk=Secret.TernarySecret(N=1<<11),
-#     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
-#         logB=11,
-#         logQ=55,
-#         d_a=4,
-#         d_b=3
-#     ),
-#     rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
-#         logB=11,
-#         logQ=55,
-#         d_a=2,
-#         d_b=1
-#     ),
-#     auto_decomposer=Decomposer.single_decomposer(
-#         logB=11,
-#         logQ=55,
-#         d=2
-#     ),
-#     lwe_decomposer=Decomposer.single_decomposer(
-#         logB=1,
-#         logQ=16,
-#         d=13,
-#     ),
-#     non_interactive_uitos_decomposer=None,
-#     fresh_noise_std=3.19,
-#     variant=ParameterVariant.INTERACTIVE_MULTIPARTY,
-#     parties=8,
-# )
-
-# EIGHT_MP_PARAMS = Parameters(
-#     logQ=55, 
-#     logQ_ks=16,
-#     logq=11,
-#     logN=11, 
-#     n=520,
-#     w=10,
-#     lwe_sk=Secret.ErrorDistribution(N=520),
-#     rlwe_sk=Secret.TernarySecret(N=1<<11),
-#     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
-#         logB=11,
-#         logQ=55,
-#         d_a=4,
-#         d_b=3
-#     ),
-#     rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
-#         logB=11,
-#         logQ=55,
-#         d_a=2,
-#         d_b=1
-#     ),
-#     auto_decomposer=Decomposer.single_decomposer(
-#         logB=11,
-#         logQ=55,
-#         d=2
-#     ),
-#     lwe_decomposer=Decomposer.single_decomposer(
-#         logB=1,
-#         logQ=16,
-#         d=13,
-#     ),
-#     non_interactive_uitos_decomposer=None,
-#     fresh_noise_std=3.19,
-#     variant=ParameterVariant.INTERACTIVE_MULTIPARTY,
-#     parties=8,
-# )
-
-
-# NI_2_NEW = Parameters(
-#     logQ=54, 
-#     logQ_ks=15,
-#     logq=11,
-#     logN=11, 
-#     n=580,
-#     w=10,
-#     lwe_sk=Secret.TernarySecret(N=580),
-#     rlwe_sk=Secret.TernarySecret(N=1<<11),
-#     rgsw_by_rgsw_decomposer=Decomposer.double_decomposer(
-#         logB=4,
-#         logQ=54,
-#         d_a=10,
-#         d_b=9 
-#     ),
-#     rlwe_by_rgsw_decomposer=Decomposer.double_decomposer(
-#         logB=17,
-#         logQ=54,
-#         d_a=1,
-#         d_b=1
-#     ),
-#     auto_decomposer=Decomposer.single_decomposer(
-#         logB=24,
-#         logQ=54,
-#         d=1
-#     ),
-#     lwe_decomposer=Decomposer.single_decomposer(
-#         logB=1,
-#         logQ=15,
-#         d=12,
-#     ),
-#     non_interactive_uitos_decomposer=Decomposer.single_decomposer(
-#         logB=1,
-#         logQ=54,
-#         d=50
-#     ),
-#     fresh_noise_std=3.19,
-#     variant=ParameterVariant.NON_INTERACTIVE_MULTIPARTY,
-#     parties=2,
-# )

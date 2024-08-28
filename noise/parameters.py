@@ -131,11 +131,16 @@ class Parameters():
         if pr_fail > log_fail:
             raise Exception(f'initial PR[fail]={pr_fail} > target PR[fail]={log_fail}')
 
-        # TODO: TEST WITH SWITCHED ORDER AND TAKE BEST BUT REQUIRES WAY TO 
-        # EVALUATE THE COMPLEXITY OF PARAMETERS
-        pr_fail = self.lwe_decomposer.optimize(self.pr_fail, log_fail)
-        pr_fail = self.auto_decomposer.optimize(self.pr_fail, log_fail)
+        # In order of affecting the complexity of the bootstrapping
         pr_fail = self.rlwe_by_rgsw_decomposer.optimize(self.pr_fail, log_fail)
+        pr_fail = self.auto_decomposer.optimize(self.pr_fail, log_fail)
+        pr_fail = self.lwe_decomposer.optimize(self.pr_fail, log_fail)
+        pr_fail = self.rgsw_by_rgsw_decomposer.optimize(self.pr_fail, log_fail)
+        
+        # Second pass
+        pr_fail = self.rlwe_by_rgsw_decomposer.optimize(self.pr_fail, log_fail)
+        pr_fail = self.auto_decomposer.optimize(self.pr_fail, log_fail)
+        pr_fail = self.lwe_decomposer.optimize(self.pr_fail, log_fail)
         pr_fail = self.rgsw_by_rgsw_decomposer.optimize(self.pr_fail, log_fail)
         
         return pr_fail

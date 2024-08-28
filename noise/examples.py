@@ -14,5 +14,5 @@ P2_MSG2_PADD1 = Parameters(
     parties=2,
 )
 
-print(P2_MSG2_PADD1.optimize(-40))
+print(f'PR[fail]=2^{P2_MSG2_PADD1.optimize(-128)}')
 P2_MSG2_PADD1.print_decomposers()

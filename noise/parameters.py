@@ -165,7 +165,7 @@ class Parameters():
                 var_fresh += self.fresh_noise_var * self.var_sk_rlwe
         return var_fresh
 
-    def var_brk(self):
+    def var_rgsw_rgsw(self):
 
         var_rgsw_fresh = self.var_rgsw_fresh()
 
@@ -180,6 +180,9 @@ class Parameters():
         var_rgswbyrgsw_b += RR(1 << (self.rgsw_by_rgsw_decomposer.ignore_bits_b()*2))/RR(12)
 
         return var_rgswbyrgsw_a + var_rgswbyrgsw_b
+
+    def var_brk(self):
+        return self.var_rgsw_fresh() + (self.k-1) * self.var_rgsw_rgsw()
 
     def var_acc(self):
 

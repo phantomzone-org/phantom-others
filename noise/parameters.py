@@ -17,7 +17,7 @@ def format_rr(v: RR):
 class Parameters():
     def __init__(
         self,
-        msg,
+        msg_bits,
         padding,
         logQ, 
         logQ_ks,
@@ -28,6 +28,7 @@ class Parameters():
         parties,
         w=10,
         fresh_noise_std=3.19,
+        max_logB = None,
         rgsw_by_rgsw_decomposer: Decomposer=None,
         rlwe_by_rgsw_decomposer: Decomposer=None,
         auto_decomposer: Decomposer=None,
@@ -35,7 +36,7 @@ class Parameters():
         non_interactive_uitos_decomposer:Decomposer=None,
     ):
         self.k = parties
-        self.msg = msg
+        self.msg_bits = msg_bits
         self.padding = padding
 
         if variant == ParameterVariant.NON_INTERACTIVE_MULTIPARTY:
@@ -51,6 +52,7 @@ class Parameters():
                 logQ=logQ,
                 d_a=logQ,
                 d_b=logQ,
+                max_logB=max_logB,
             )
         else:
             assert rlwe_by_rgsw_decomposer.d_a is not None and rlwe_by_rgsw_decomposer.d_b is not None
@@ -74,6 +76,7 @@ class Parameters():
                 logB=1,
                 logQ=logQ,
                 d=logQ,
+                max_logB=max_logB,
             )
         else:
             assert auto_decomposer.logQ == logQ
@@ -126,6 +129,8 @@ class Parameters():
 
         pr_fail = self.pr_fail()
 
+
+
         if pr_fail > log_fail:
             raise Exception(f'initial PR[fail]={pr_fail} > target PR[fail]={log_fail}')
 
@@ -144,10 +149,17 @@ class Parameters():
         return pr_fail
 
     def print_decomposers(self):
+        print(">>> DECOMPOSERS <<<")
         print(f'rgsw_by_rgsw_decomposer: logB={self.rgsw_by_rgsw_decomposer.logB:<2d} d_a={self.rgsw_by_rgsw_decomposer.d_a:<2d} d_b={self.rgsw_by_rgsw_decomposer.d_b:<2d}')
         print(f'rlwe_by_rgsw_decomposer: logB={self.rlwe_by_rgsw_decomposer.logB:<2d} d_a={self.rlwe_by_rgsw_decomposer.d_a:<2d} d_b={self.rlwe_by_rgsw_decomposer.d_b:<2d}')
         print(f'auto_decomposer        : logB={self.auto_decomposer.logB:<2d} d_a={self.auto_decomposer.d_a:<2d}')
         print(f'lwe_decomposer         : logB={self.lwe_decomposer.logB:<2d} d_a={self.lwe_decomposer.d_a:<2d}')
+
+    def print_key_statistics(self):
+        print(">>> KEY STATISTICS <<<")
+        print("RGSW log2 var:", log(self.var_brk(), 2))
+        print("rlwe x auto log2 var:", log(self.var_auto(), 2))
+        print("rlwe x RGSW log2 var", log(self.var_rlwe_rgsw(self.var_brk()), 2))
 
     def var_rgsw_fresh(self):
         n = RR(self.n)
@@ -184,8 +196,7 @@ class Parameters():
     def var_brk(self):
         return self.var_rgsw_fresh() + (self.k-1) * self.var_rgsw_rgsw()
 
-    def var_acc(self):
-
+    def var_rlwe_rgsw(self, var_rgsw):
         B_rlwe_rgsw = RR(1<<self.rlwe_by_rgsw_decomposer.logB)
 
         var_brk = self.var_brk()
@@ -196,19 +207,21 @@ class Parameters():
         var_rlwe_by_rgsw_a += self.N * self.var_sk_rlwe * RR(1 << (self.rlwe_by_rgsw_decomposer.ignore_bits_a()*2))/RR(12)
         var_rlwe_by_rgsw_b += RR(1 << (self.rlwe_by_rgsw_decomposer.ignore_bits_b()*2))/RR(12)
 
-        return self.n * (var_rlwe_by_rgsw_a + var_rlwe_by_rgsw_b) + self.var_auto()
+        return var_rlwe_by_rgsw_a + var_rlwe_by_rgsw_b
+
+    def var_acc(self):
+        return self.n * self.var_rlwe_rgsw(self.var_brk()) + self.worst_case_autos() * self.var_auto()
 
     def var_auto(self):
         var_auto  = self.N * self.k * self.auto_decomposer.d_a * RR(1<<(self.auto_decomposer.logB*2))/RR(12)
         var_auto += self.N * self.var_sk_rlwe * RR(1<<(self.auto_decomposer.ignore_bits_a()*2))/RR(12)
-        return self.worst_case_autos() * var_auto
-
+        return  var_auto
 
     def worst_case_autos(self):
         return (((self.w - 1)/self.w)*self.n)+(1/self.w)*(self.N)
 
     def var_ks_rlwe_to_lwe(self):
-        var_ks  = self.N * self.k * self.fresh_noise_var *self.lwe_decomposer.d_a * RR(1<<(self.lwe_decomposer.logB*2))/RR(12)
+        var_ks  = self.N * self.k * self.fresh_noise_var *self.lwe_decomposer.d_a * RR(1<<(self.auto_decomposer.logB*2))/RR(12)
         var_ks += self.N * self.var_sk_rlwe * RR(1<<(self.lwe_decomposer.ignore_bits_a()*2))/RR(12)
         return var_ks
 
@@ -222,7 +235,7 @@ class Parameters():
         var_ms2 = ((self.n*self.var_sk_lwe)+1) * RR(1/12) # Q_ks -> q
         
         # blind_rotate(ks_rlwe_to_lwe(ct0 + msg * ct1)) + [Q -> Q_ks] + [Q_ks -> q]
-        return (q_sq/Q_sq)*self.var_acc()*(1+pow(self.msg, 2)) + (q_sq/Q_ks_sq)*(var_ms1+self.var_ks_rlwe_to_lwe()) + var_ms2 + RR(1/12)
+        return (q_sq/Q_sq)*self.var_acc()*(1+pow(2, self.msg_bits)) + (q_sq/Q_ks_sq)*(var_ms1+self.var_ks_rlwe_to_lwe()) + var_ms2 + RR(1/12)
 
     def auto_ops_zp(self):
         return self.N * self.auto_decomposer.d_a * (log(self.N, 2) + 1)
@@ -237,11 +250,11 @@ class Parameters():
         return RR(1/12) + (self.n*self.var_sk_lwe) * RR(4/12) #  odd mod switch
 
     def blind_rotate_fail_prob(self):
-        msg_space = pow(self.padding, 2)*pow(self.msg, 4) # [padding|msg|msg]
+        msg_space = pow(2, self.padding)*pow(4, self.msg_bits) # [padding|msg|msg]
         return ((RR(self.q)/msg_space)/sqrt(2*self.var_blind_rotate())).erfc() # PR[e > q/msg_space]
 
     def drift_fail_prob(self):
-        return ((self.N/pow(self.msg, 2))/sqrt(2*self.var_drift())).erfc() # PR[e > N/msg^2]
+        return ((self.N/pow(2, self.msg_bits))/sqrt(2*self.var_drift())).erfc() # PR[e > N/msg^2]
 
     def pr_fail(self):
         return (1-(1-self.blind_rotate_fail_prob())*(1-self.drift_fail_prob())).log2()

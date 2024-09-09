@@ -18,6 +18,7 @@ class Parameters():
     def __init__(
         self,
         msg_bits,
+        lut_way,
         padding,
         logQ, 
         logQ_ks,
@@ -38,6 +39,8 @@ class Parameters():
         self.k = parties
         self.msg_bits = msg_bits
         self.padding = padding
+        self.lut_way = lut_way
+        self.msg_space = pow(2, self.padding+self.msg_bits*self.lut_way) # [[msg] * lut_way][padding]
 
         if variant == ParameterVariant.NON_INTERACTIVE_MULTIPARTY:
             assert non_interactive_uitos_decomposer is not None
@@ -135,15 +138,16 @@ class Parameters():
             raise Exception(f'initial PR[fail]={pr_fail} > target PR[fail]={log_fail}')
 
         # In order of affecting the complexity of the bootstrapping
-        pr_fail = self.rlwe_by_rgsw_decomposer.optimize(self.pr_fail, log_fail)
         pr_fail = self.auto_decomposer.optimize(self.pr_fail, log_fail)
+        pr_fail = self.rlwe_by_rgsw_decomposer.optimize(self.pr_fail, log_fail)
         pr_fail = self.lwe_decomposer.optimize(self.pr_fail, log_fail)
-        pr_fail = self.rgsw_by_rgsw_decomposer.optimize(self.pr_fail, log_fail)
         
         # Second pass
-        pr_fail = self.rlwe_by_rgsw_decomposer.optimize(self.pr_fail, log_fail)
         pr_fail = self.auto_decomposer.optimize(self.pr_fail, log_fail)
+        pr_fail = self.rlwe_by_rgsw_decomposer.optimize(self.pr_fail, log_fail)
         pr_fail = self.lwe_decomposer.optimize(self.pr_fail, log_fail)
+
+        # Finally, updates BRK
         pr_fail = self.rgsw_by_rgsw_decomposer.optimize(self.pr_fail, log_fail)
         
         return pr_fail
@@ -234,8 +238,8 @@ class Parameters():
         var_ms1 = ((self.N*self.var_sk_rlwe)+1) * RR(1/12)  # Q -> Q_ks
         var_ms2 = ((self.n*self.var_sk_lwe)+1) * RR(1/12) # Q_ks -> q
         
-        # blind_rotate(ks_rlwe_to_lwe(ct0 + msg * ct1)) + [Q -> Q_ks] + [Q_ks -> q]
-        return (q_sq/Q_sq)*self.var_acc()*(1+pow(2, self.msg_bits)) + (q_sq/Q_ks_sq)*(var_ms1+self.var_ks_rlwe_to_lwe()) + var_ms2 + RR(1/12)
+        # blind_rotate(ks_rlwe_to_lwe(ct0 + msg * ct1 + msg^2 * ct2...)) + [Q -> Q_ks] + [Q_ks -> q]
+        return (q_sq/Q_sq)*self.var_acc()*(1+pow(2, self.msg_bits*(self.lut_way-1))) + (q_sq/Q_ks_sq)*(var_ms1+self.var_ks_rlwe_to_lwe()) + var_ms2 + RR(1/12)
 
     def auto_ops_zp(self):
         return self.N * self.auto_decomposer.d_a * (log(self.N, 2) + 1)
@@ -250,11 +254,10 @@ class Parameters():
         return RR(1/12) + (self.n*self.var_sk_lwe) * RR(4/12) #  odd mod switch
 
     def blind_rotate_fail_prob(self):
-        msg_space = pow(2, self.padding)*pow(4, self.msg_bits) # [padding|msg|msg]
-        return ((RR(self.q)/msg_space)/sqrt(2*self.var_blind_rotate())).erfc() # PR[e > q/msg_space]
+        return ((RR(self.q)/self.msg_space)/sqrt(2*self.var_blind_rotate())).erfc() # PR[e > q/msg_space]
 
     def drift_fail_prob(self):
-        return ((self.N/pow(2, self.msg_bits))/sqrt(2*self.var_drift())).erfc() # PR[e > N/msg^2]
+        return ((min(self.N, RR(self.q))/(2*self.msg_space))/sqrt(2*self.var_drift())).erfc() # PR[e > N/msg^2]
 
     def pr_fail(self):
         return (1-(1-self.blind_rotate_fail_prob())*(1-self.drift_fail_prob())).log2()

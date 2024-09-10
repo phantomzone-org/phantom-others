@@ -1,7 +1,7 @@
 from decomposer import Decomposer
 from secret import Secret
 from enum import Enum
-from sage.all import RealField, sqrt, log, ceil
+from sage.all import RealField, sqrt, log, ceil, exp
 from estimator import *
 
 RR = RealField(256)
@@ -28,7 +28,8 @@ class Parameters():
         variant: ParameterVariant,
         parties,
         w=10,
-        fresh_noise_std=3.19,
+        fresh_noise_std_lwe=3.19,
+        fresh_noise_std_rlwe=3.19,
         max_logB = None,
         rgsw_by_rgsw_decomposer: Decomposer=None,
         rlwe_by_rgsw_decomposer: Decomposer=None,
@@ -107,8 +108,11 @@ class Parameters():
         self.N = RR(rlwe_sk.dimension)
         self.n = RR(lwe_sk.dimension)
 
-        self.fresh_noise_std = RR(fresh_noise_std)
-        self.fresh_noise_var = self.fresh_noise_std*self.fresh_noise_std
+        self.fresh_noise_std_lwe = RR(fresh_noise_std_lwe)
+        self.fresh_noise_var_lwe = self.fresh_noise_std_lwe*self.fresh_noise_std_lwe
+
+        self.fresh_noise_std_rlwe = RR(fresh_noise_std_rlwe)
+        self.fresh_noise_var_rlwe = self.fresh_noise_std_rlwe*self.fresh_noise_std_rlwe
 
         self.w = RR(w)
 
@@ -173,12 +177,12 @@ class Parameters():
         var_fresh = RR(0)
         match self.variant:
             case ParameterVariant.INTERACTIVE_MULTIPARTY:
-                var_fresh = self.fresh_noise_var * (2 * self.N * self.var_sk_rlwe+1)
+                var_fresh = self.fresh_noise_var_rlwe * (2 * self.N * self.var_sk_rlwe+1)
             case ParameterVariant.NON_INTERACTIVE_MULTIPARTY:
                 B = RR(1<<self.non_interactive_uitos_decomposer.logB)
-                var_fresh = self.N * self.k * self.fresh_noise_var * B**2 / RR(12) * RR(self.non_interactive_uitos_decomposer.d_a)
+                var_fresh = self.N * self.k * self.fresh_noise_var_rlwe * B**2 / RR(12) * RR(self.non_interactive_uitos_decomposer.d_a)
                 var_fresh += self.N * self.var_sk_rlwe * RR(1<<(self.non_interactive_uitos_decomposer.ignore_bits_a()*2))/RR(12)
-                var_fresh += self.fresh_noise_var * self.var_sk_rlwe
+                var_fresh += self.fresh_noise_var_rlwe * self.var_sk_rlwe
         return var_fresh
 
     def var_rgsw_rgsw(self):
@@ -214,7 +218,7 @@ class Parameters():
         return var_rlwe_by_rgsw_a + var_rlwe_by_rgsw_b
 
     def var_acc(self):
-        return self.n * self.var_rlwe_rgsw(self.var_brk()) + self.worst_case_autos() * self.var_auto()
+        return self.n * self.var_rlwe_rgsw(self.var_brk()) + self.avg_case_auto() * self.var_auto()
 
     def var_auto(self):
         var_auto  = self.N * self.k * self.auto_decomposer.d_a * RR(1<<(self.auto_decomposer.logB*2))/RR(12)
@@ -224,8 +228,11 @@ class Parameters():
     def worst_case_autos(self):
         return (((self.w - 1)/self.w)*self.n)+(1/self.w)*(self.N)
 
+    def avg_case_auto(self):
+        return self.N * (1-(1-1/self.w)*exp(-self.n/self.N))
+
     def var_ks_rlwe_to_lwe(self):
-        var_ks  = self.N * self.k * self.fresh_noise_var *self.lwe_decomposer.d_a * RR(1<<(self.auto_decomposer.logB*2))/RR(12)
+        var_ks  = self.N * self.k * self.fresh_noise_var_lwe *self.lwe_decomposer.d_a * RR(1<<(self.auto_decomposer.logB*2))/RR(12)
         var_ks += self.N * self.var_sk_rlwe * RR(1<<(self.lwe_decomposer.ignore_bits_a()*2))/RR(12)
         return var_ks
 
@@ -264,7 +271,7 @@ class Parameters():
 
     def security(self):
         # LWE
-        lwe = LWE.Parameters(n=int(self.n), q=int(self.Q_ks), Xs=self.lwe_sk.distr, Xe=ND.DiscreteGaussian(self.fresh_noise_std), m=int(2*self.n))
+        lwe = LWE.Parameters(n=int(self.n), q=int(self.Q_ks), Xs=self.lwe_sk.distr, Xe=ND.DiscreteGaussian(self.fresh_noise_std_lwe), m=int(2*self.n))
         lwe_res = LWE.estimate(lwe, red_cost_model = RC.BDGL16)
 
         print("LWE Security")
@@ -273,7 +280,7 @@ class Parameters():
         
         print("")
 
-        rlwe = LWE.Parameters(n=int(self.N), q=int(self.Q), Xs=self.rlwe_sk.distr, Xe=ND.DiscreteGaussian(self.fresh_noise_std), m=int(2*self.N))
+        rlwe = LWE.Parameters(n=int(self.N), q=int(self.Q), Xs=self.rlwe_sk.distr, Xe=ND.DiscreteGaussian(self.fresh_noise_std_rlwe), m=int(2*self.N))
         rlwe_res = LWE.estimate(rlwe, red_cost_model = RC.BDGL16)
 
         print("RLWE Security")

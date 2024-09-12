@@ -232,7 +232,7 @@ class Parameters():
         return self.N * (1-(1-1/self.w)*exp(-self.n/self.N))
 
     def var_ks_rlwe_to_lwe(self):
-        var_ks  = self.N * self.k * self.fresh_noise_var_lwe *self.lwe_decomposer.d_a * RR(1<<(self.auto_decomposer.logB*2))/RR(12)
+        var_ks  = self.N * self.k * self.fresh_noise_var_lwe *self.lwe_decomposer.d_a * RR(1<<(self.lwe_decomposer.logB*2))/RR(12)
         var_ks += self.N * self.var_sk_rlwe * RR(1<<(self.lwe_decomposer.ignore_bits_a()*2))/RR(12)
         return var_ks
 

@@ -41,7 +41,7 @@ class Parameters():
         self.msg_bits = msg_bits
         self.padding = padding
         self.lut_way = lut_way
-        self.msg_space = pow(2, self.padding+self.msg_bits*self.lut_way) # [[msg] * lut_way][padding]
+        self.msg_space = pow(2, 2) # [[msg] * lut_way][padding]
 
         if variant == ParameterVariant.NON_INTERACTIVE_MULTIPARTY:
             assert non_interactive_uitos_decomposer is not None
@@ -135,8 +135,6 @@ class Parameters():
     def optimize(self, log_fail: float) -> float:
 
         pr_fail = self.pr_fail()
-
-
 
         if pr_fail > log_fail:
             raise Exception(f'initial PR[fail]={pr_fail} > target PR[fail]={log_fail}')
@@ -246,7 +244,9 @@ class Parameters():
         var_ms2 = ((self.n*self.var_sk_lwe)+1) * RR(1/12) # Q_ks -> q
         
         # blind_rotate(ks_rlwe_to_lwe(ct0 + msg * ct1 + msg^2 * ct2...)) + [Q -> Q_ks] + [Q_ks -> q]
-        return (q_sq/Q_sq)*self.var_acc()*(1+pow(2, self.msg_bits*(self.lut_way-1))) + (q_sq/Q_ks_sq)*(var_ms1+self.var_ks_rlwe_to_lwe()) + var_ms2 + RR(1/12)
+        # return (q_sq/Q_sq)*self.var_acc()*(1+pow(2, self.msg_bits*(self.lut_way-1))) + (q_sq/Q_ks_sq)*(var_ms1+self.var_ks_rlwe_to_lwe()) + var_ms2 + RR(1/12)
+        # Warning: (4*self.var_acc()) is specialised for a specific variant of boolean case
+        return (q_sq/Q_sq)*(4*self.var_acc()) + (q_sq/Q_ks_sq)*(var_ms1+self.var_ks_rlwe_to_lwe()) + var_ms2 + RR(1/12)
 
     def auto_ops_zp(self):
         return self.N * self.auto_decomposer.d_a * (log(self.N, 2) + 1)
@@ -261,13 +261,36 @@ class Parameters():
         return RR(1/12) + (self.n*self.var_sk_lwe) * RR(4/12) #  odd mod switch
 
     def blind_rotate_fail_prob(self):
-        return ((RR(self.q)/self.msg_space)/sqrt(2*self.var_blind_rotate())).erfc() # PR[e > q/msg_space]
+        return ((RR(self.q)/8)/sqrt(2*self.var_blind_rotate())).erfc() # PR[e > q/msg_space]
 
     def drift_fail_prob(self):
         return ((min(self.N, RR(self.q))/(2*self.msg_space))/sqrt(2*self.var_drift())).erfc() # PR[e > N/msg^2]
 
     def pr_fail(self):
-        return (1-(1-self.blind_rotate_fail_prob())*(1-self.drift_fail_prob())).log2()
+        # return (1-(1-self.blind_rotate_fail_prob())*(1-self.drift_fail_prob())).log2()
+        return (self.blind_rotate_fail_prob()).log2()
+
+    def decryption_failure(self, logB:int, d:int, pack_lwe: bool=False):
+        final_err_var = self.var_acc()
+
+        # decryption share error
+        final_err_var += RR(self.fresh_noise_var_rlwe*self.k)
+
+        # packing LWE into RLWE error (if pack_lwe == true)
+        if pack_lwe == True:
+            assert logB is not None
+            assert d is not None
+            B = (1<<logB)
+            # worst case = N automostphisms
+            final_err_var += self.N * (
+                ((B**2)/RR(12)) * (d) * RR(self.fresh_noise_var_rlwe*self.k)
+            )
+        else:
+            assert logB is None
+            assert d is None
+
+        # decryption failure probability
+        return (((RR(self.Q)/8)/sqrt(2*final_err_var)).erfc()).log2() # PR[e > q/msg_space]
 
     def security(self):
         # LWE

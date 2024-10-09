@@ -33,7 +33,7 @@ print(f'PR[e > Q/{{msg_space}} | drift > N/{{2*msg_space}}]=2^{P4_BOOL_60.optimi
 P4_BOOL_60.print_decomposers()
 #P4_MSG1_LUT3_PADD1_80.print_key_statistics()
 print("log2(#ops_Zp):", log(P4_BOOL_60.blind_rotate_ops_zp(), 2))
-print("Decryption failure probability: ", P4_BOOL_60.decryption_failure(pack_lwe=True, logB=1, d=64))
+print("Decryption failure probability: ", P4_BOOL_60.decryption_failure(pack_lwe=True, packing_logQ=61, logB=17, d=1))
 P4_BOOL_60.security()
 
 # P4_MSG1_LUT3_PADD1_80 = Parameters(

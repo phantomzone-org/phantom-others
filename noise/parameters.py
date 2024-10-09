@@ -219,7 +219,7 @@ class Parameters():
         return self.n * self.var_rlwe_rgsw(self.var_brk()) + self.avg_case_auto() * self.var_auto()
 
     def var_auto(self):
-        var_auto  = self.N * self.k * self.auto_decomposer.d_a * RR(1<<(self.auto_decomposer.logB*2))/RR(12)
+        var_auto  = self.N * self.k * self.fresh_noise_var_rlwe * self.auto_decomposer.d_a * RR(1<<(self.auto_decomposer.logB*2))/RR(12)
         var_auto += self.N * self.var_sk_rlwe * RR(1<<(self.auto_decomposer.ignore_bits_a()*2))/RR(12)
         return  var_auto
 
@@ -270,8 +270,11 @@ class Parameters():
         # return (1-(1-self.blind_rotate_fail_prob())*(1-self.drift_fail_prob())).log2()
         return (self.blind_rotate_fail_prob()).log2()
 
-    def decryption_failure(self, logB:int, d:int, pack_lwe: bool=False):
+    def decryption_failure(self, packing_logQ: int, logB:int, d:int, pack_lwe: bool=False):
         final_err_var = self.var_acc()
+
+        # mod switch from Q -> packing_logQ
+        final_err_var += ((self.N*self.var_sk_rlwe)+1) * RR(1/12)
 
         # decryption share error
         final_err_var += RR(self.fresh_noise_var_rlwe*self.k)
@@ -280,11 +283,19 @@ class Parameters():
         if pack_lwe == True:
             assert logB is not None
             assert d is not None
-            B = (1<<logB)
-            # worst case = N automostphisms
-            final_err_var += self.N * (
-                ((B**2)/RR(12)) * (d) * RR(self.fresh_noise_var_rlwe*self.k)
+            decomposer = Decomposer.single_decomposer(
+                logQ=packing_logQ,
+                d=d,
+                logB=logB,
             )
+            # worst case = N automostphisms
+            single_auto = (
+               self.N * ((1<<(2*decomposer.logB))/RR(12)) * RR(decomposer.d_a) * self.fresh_noise_var_rlwe * self.k
+            )
+            single_auto += (
+                self.N * self.var_sk_rlwe * RR(1<<(decomposer.ignore_bits_a()*2))/RR(12)
+            )
+            final_err_var += self.N * single_auto
         else:
             assert logB is None
             assert d is None

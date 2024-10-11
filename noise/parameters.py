@@ -300,7 +300,7 @@ class Parameters():
             assert d is None
             final_err_var = self.var_acc()
         
-        print("Final error variance: ", sqrt(final_err_var).log2())
+        # print("Final error variance: ", sqrt(final_err_var).log2())
 
         # decryption share error
         final_err_var += RR(self.fresh_noise_var_rlwe*self.k)

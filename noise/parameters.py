@@ -274,7 +274,7 @@ class Parameters():
         final_err_var = self.var_acc()
 
         # mod switch from Q -> packing_logQ
-        final_err_var += ((self.N*self.var_sk_rlwe)+1) * RR(1/12)
+        final_err_var += ((self.N*self.var_sk_lwe)+1) * RR(1/12)
 
         # decryption share error
         final_err_var += RR(self.fresh_noise_var_rlwe*self.k)
@@ -290,18 +290,18 @@ class Parameters():
             )
             # worst case = N automostphisms
             single_auto = (
-               self.N * ((1<<(2*decomposer.logB))/RR(12)) * RR(decomposer.d_a) * self.fresh_noise_var_rlwe * self.k
+               self.N * (RR(1<<(2*decomposer.logB))/RR(12)) * RR(decomposer.d_a) * self.fresh_noise_var_rlwe * self.k
             )
             single_auto += (
                 self.N * self.var_sk_rlwe * RR(1<<(decomposer.ignore_bits_a()*2))/RR(12)
             )
+
             final_err_var += self.N * single_auto
         else:
             assert logB is None
             assert d is None
-
         # decryption failure probability
-        return (((RR(self.Q)/8)/sqrt(2*final_err_var)).erfc()).log2() # PR[e > q/msg_space]
+        return (((RR(1<<packing_logQ)/8)/sqrt(2*final_err_var)).erfc()).log2() # PR[e > q/msg_space]
 
     def security(self):
         # LWE

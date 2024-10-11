@@ -271,13 +271,6 @@ class Parameters():
         return (self.blind_rotate_fail_prob()).log2()
 
     def decryption_failure(self, packing_logQ: int, logB:int, d:int, pack_lwe: bool=False):
-        final_err_var = self.var_acc()
-
-        # mod switch from Q -> packing_logQ
-        final_err_var += ((self.N*self.var_sk_lwe)+1) * RR(1/12)
-
-        # decryption share error
-        final_err_var += RR(self.fresh_noise_var_rlwe*self.k)
 
         # packing LWE into RLWE error (if pack_lwe == true)
         if pack_lwe == True:
@@ -288,7 +281,8 @@ class Parameters():
                 d=d,
                 logB=logB,
             )
-            # worst case = N automostphisms
+
+            # single automorphsim error
             single_auto = (
                self.N * (RR(1<<(2*decomposer.logB))/RR(12)) * RR(decomposer.d_a) * self.fresh_noise_var_rlwe * self.k
             )
@@ -296,10 +290,21 @@ class Parameters():
                 self.N * self.var_sk_rlwe * RR(1<<(decomposer.ignore_bits_a()*2))/RR(12)
             )
 
-            final_err_var += self.N * single_auto
+            # Appendix A.3 of https://eprint.iacr.org/2020/015.pdf
+            # for the case when 2^{l} = 1024
+            packing_var = (self.N**2)/RR(3) * single_auto
+
+            final_err_var = packing_var + self.var_acc() + ((self.N*self.var_sk_rlwe)+1) * RR(1/12)
         else:
             assert logB is None
             assert d is None
+            final_err_var = self.var_acc()
+        
+        print("Final error variance: ", sqrt(final_err_var).log2())
+
+        # decryption share error
+        final_err_var += RR(self.fresh_noise_var_rlwe*self.k)
+
         # decryption failure probability
         return (((RR(1<<packing_logQ)/8)/sqrt(2*final_err_var)).erfc()).log2() # PR[e > q/msg_space]
 
